@@ -17,7 +17,7 @@ app = Flask(__name__)
 # APPLICATION SETTINGS
 # =========================
 
-app.secret_key = "vaultx_secret_key_123"
+app.secret_key = os.environ.get("SECRET_KEY", "vaultx_secret_key_123")
 
 UPLOAD_FOLDER = "storage"
 DATABASE = "vaultx.db"
