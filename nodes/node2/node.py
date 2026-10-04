@@ -86,8 +86,7 @@ if __name__ == "__main__":
     print("--------------------------------")
 
     app.run(
-        host="127.0.0.1",
-        port=NODE_PORT,
-        debug=False,
-        use_reloader=False
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", NODE_PORT)),
+        debug=False
     )
