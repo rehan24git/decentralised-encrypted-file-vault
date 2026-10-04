@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+
+vaultx.db
+vaultx.key
+
+storage/*
+test.txt
+
+nodes/node1/node_storage/*
+nodes/node2/node_storage/*

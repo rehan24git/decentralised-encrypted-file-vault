@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>VAULTX - Create Account</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <div class="login-container">
+
+        <!-- Logo -->
+        <div class="logo">
+            🔐
+        </div>
+
+
+        <!-- Brand -->
+        <h1>VAULTX</h1>
+
+        <p class="subtitle">
+            Decentralised • Encrypted • Private
+        </p>
+
+
+        <!-- Register Card -->
+        <div class="login-card">
+
+            <h2>Create Account</h2>
+
+            <p class="login-description">
+                Create your secure VAULTX account.
+            </p>
+
+
+            <!-- Register Form -->
+            <form action="/register" method="POST">
+
+                <!-- Email -->
+                <label for="email">
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    required
+                >
+
+
+                <!-- Password -->
+                <label for="password">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Create a password"
+                    required
+                >
+
+
+                <!-- Create Account -->
+                <button type="submit">
+                    CREATE ACCOUNT
+                </button>
+
+            </form>
+
+
+            <!-- Login -->
+            <p class="register">
+
+                Already have an account?
+
+                <a href="/">
+                    Login
+                </a>
+
+            </p>
+
+        </div>
+
+
+        <!-- Security Message -->
+        <p class="security-note">
+            🛡 Your account will be protected by VAULTX security
+        </p>
+
+    </div>
+
+</body>
+
+</html>

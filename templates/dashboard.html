@@ -1,0 +1,675 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>VAULTX - Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-logo">
+                🔐
+            </div>
+
+            <div>
+
+                <h2>VAULTX</h2>
+
+                <span>
+                    Secure File Vault
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            <p class="nav-title">
+                MAIN
+            </p>
+
+            <a href="/dashboard"
+               class="nav-item active">
+
+                <span>🏠</span>
+
+                Dashboard
+
+            </a>
+
+
+            <a href="#files"
+               class="nav-item">
+
+                <span>📁</span>
+
+                My Files
+
+            </a>
+
+
+            <a href="#upload"
+               class="nav-item">
+
+                <span>⬆️</span>
+
+                Upload
+
+            </a>
+
+
+            <p class="nav-title security-title">
+                SECURITY
+            </p>
+
+
+            <a href="#security"
+               class="nav-item">
+
+                <span>🔐</span>
+
+                Security Center
+
+            </a>
+
+
+            <a href="#network"
+               class="nav-item">
+
+                <span>🌐</span>
+
+                Network Nodes
+
+            </a>
+
+
+            <p class="nav-title security-title">
+                SYSTEM
+            </p>
+
+
+            <a href="#settings"
+               class="nav-item">
+
+                <span>⚙️</span>
+
+                Settings
+
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <div class="sidebar-status">
+
+                <span class="status-dot"></span>
+
+                <div>
+
+                    <strong>
+                        System Secure
+                    </strong>
+
+                    <small>
+                        All services operational
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <a href="/logout"
+               class="logout-btn">
+
+                <span>🚪</span>
+
+                Logout
+
+            </a>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- MAIN -->
+
+    <main class="main-content">
+
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <div>
+
+                <p class="page-label">
+                    OVERVIEW
+                </p>
+
+                <h1>
+                    Dashboard
+                </h1>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+                <button class="notification-btn">
+                    🔔
+                </button>
+
+
+                <div class="user-profile">
+
+                    <div class="user-avatar">
+
+                        {{ email[0]|upper }}
+
+                    </div>
+
+
+                    <div class="user-info">
+
+                        <strong>
+                            {{ email }}
+                        </strong>
+
+                        <span>
+                            Vault Owner
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- WELCOME -->
+
+        <section class="welcome-section"
+                 id="upload">
+
+            <div>
+
+                <p class="welcome-small">
+                    Welcome back
+                </p>
+
+                <h2>
+                    Your private vault is ready.
+                </h2>
+
+                <p>
+                    Upload your files and protect them
+                    with encryption.
+                </p>
+
+            </div>
+
+
+            <form action="/upload"
+                  method="POST"
+                  enctype="multipart/form-data"
+                  class="upload-form">
+
+                <input
+                    type="file"
+                    name="file"
+                    id="fileInput"
+                    required
+                    hidden
+                >
+
+                <label
+                    for="fileInput"
+                    class="upload-main-btn">
+
+                    ⬆️ Upload File
+
+                </label>
+
+                <button
+                    type="submit"
+                    id="uploadSubmit"
+                    class="upload-submit-btn">
+
+                    Encrypt & Save
+
+                </button>
+
+            </form>
+
+        </section>
+
+
+
+        <!-- STAT CARDS -->
+
+        <section class="stats-grid">
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon blue">
+                    📁
+                </div>
+
+                <div class="stat-content">
+
+                    <span>
+                        Total Files
+                    </span>
+
+                    <strong>
+                        {{ total_files }}
+                    </strong>
+
+                    <small>
+                        Files in your vault
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon purple">
+                    💾
+                </div>
+
+                <div class="stat-content">
+
+                    <span>
+                        Storage Used
+                    </span>
+
+                    <strong>
+                        {{ total_size_mb }} MB
+                    </strong>
+
+                    <small>
+                        Original file size
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon green">
+                    🔐
+                </div>
+
+                <div class="stat-content">
+
+                    <span>
+                        Security
+                    </span>
+
+                    <strong>
+                        Protected
+                    </strong>
+
+                    <small>
+                        Encryption enabled
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- NETWORK NODES -->
+
+            <div class="stat-card">
+
+                <div class="stat-icon orange">
+                    🌐
+                </div>
+
+                <div class="stat-content">
+
+                    <span>
+                        Network Nodes
+                    </span>
+
+                    <strong>
+                        {{ network_nodes }}
+                    </strong>
+
+                    <small>
+                        Decentralised nodes
+                    </small>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- FILES -->
+
+        <section class="panel files-panel"
+                 id="files">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h3>
+                        My Files
+                    </h3>
+
+                    <p>
+                        Encrypted files stored in your vault
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            {% if files %}
+
+            <div class="file-list">
+
+                {% for file in files %}
+
+                <div class="file-row">
+
+
+                    <div class="file-icon">
+                        📄
+                    </div>
+
+
+                    <div class="file-details">
+
+                        <strong>
+                            {{ file["original_name"] }}
+                        </strong>
+
+                        <span>
+                            {{ "%.2f"|format(file["file_size"] / 1024) }} KB
+                            •
+                            {{ file["uploaded_at"] }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="file-actions">
+
+                        <a
+                            href="/download/{{ file['id'] }}"
+                            class="download-btn">
+
+                            Download
+
+                        </a>
+
+
+                        <form
+                            action="/delete/{{ file['id'] }}"
+                            method="POST">
+
+                            <button
+                                type="submit"
+                                class="delete-btn">
+
+                                Delete
+
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+
+            {% else %}
+
+            <div class="empty-files">
+
+                <div class="empty-icon">
+                    📂
+                </div>
+
+                <h4>
+                    No files yet
+                </h4>
+
+                <p>
+                    Upload your first file to start
+                    using your encrypted vault.
+                </p>
+
+                <label
+                    for="fileInput"
+                    class="empty-upload-btn">
+
+                    Upload Your First File
+
+                </label>
+
+            </div>
+
+            {% endif %}
+
+        </section>
+
+
+
+        <!-- SECURITY -->
+
+        <section class="panel security-panel"
+                 id="security">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h3>
+                        Security Status
+                    </h3>
+
+                    <p>
+                        Vault protection overview
+                    </p>
+
+                </div>
+
+                <span class="secure-badge">
+                    SECURE
+                </span>
+
+            </div>
+
+
+            <div class="security-item">
+
+                <div class="security-item-icon">
+                    🔑
+                </div>
+
+                <div>
+
+                    <strong>
+                        Account Protection
+                    </strong>
+
+                    <span>
+                        Password securely hashed
+                    </span>
+
+                </div>
+
+                <b>✓</b>
+
+            </div>
+
+
+            <div class="security-item">
+
+                <div class="security-item-icon">
+                    🔒
+                </div>
+
+                <div>
+
+                    <strong>
+                        File Encryption
+                    </strong>
+
+                    <span>
+                        Files encrypted before storage
+                    </span>
+
+                </div>
+
+                <b>✓</b>
+
+            </div>
+
+
+            <div class="security-item">
+
+                <div class="security-item-icon">
+                    🛡️
+                </div>
+
+                <div>
+
+                    <strong>
+                        Private Storage
+                    </strong>
+
+                    <span>
+                        Files belong only to your account
+                    </span>
+
+                </div>
+
+                <b>✓</b>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- NETWORK -->
+
+        <section class="panel network-panel"
+                 id="network">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h3>
+                        Decentralised Network
+                    </h3>
+
+                    <p>
+                        Distributed storage infrastructure
+                    </p>
+
+                </div>
+
+                <!-- DYNAMIC NODE STATUS -->
+
+                <span class="network-status">
+
+                    ● {{ network_status }}
+
+                </span>
+
+            </div>
+
+
+            <div class="network-content">
+
+                <div class="network-visual">
+
+                    <div class="network-node center-node">
+                        🔐
+                    </div>
+
+                    <div class="network-line line-one"></div>
+
+                    <div class="network-line line-two"></div>
+
+                    <div class="network-line line-three"></div>
+
+
+                    <!-- NODE 1 -->
+
+                    <div class="network-node node-one">
+
+                        N1
+
+                    </div>
+
+
+                    <div class="network-node node-two">
+
+                        N2
+
+                    </div>
+
+
+                    <div class="network-node node-three">
+
+                        N3
+
+                    </div>
+
+                </div>
+
+
+                <div class="network-info">
+```
