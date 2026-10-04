@@ -24,7 +24,7 @@ DATABASE = "vaultx.db"
 KEY_FILE = "vaultx.key"
 
 # Storage Node addresses
-NODE1_URL = "http://127.0.0.1:5001"
+NODE1_URL = "https://vaultx-node1.onrender.com"
 NODE2_URL = "http://127.0.0.1:5002"
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
