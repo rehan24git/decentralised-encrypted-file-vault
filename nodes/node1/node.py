@@ -10,7 +10,6 @@ app = Flask(__name__)
 # =========================
 
 NODE_ID = "node1"
-
 NODE_PORT = 5001
 
 
@@ -148,9 +147,10 @@ def list_files():
 # START NODE
 # =========================
 
-if __name__ == "__main__":
 
-    print("--------------------------------")
+
+    if __name__ == "__main__":
+     print("--------------------------------")
     print("VaultX Storage Node")
     print("--------------------------------")
     print("Node ID :", NODE_ID)
@@ -159,9 +159,8 @@ if __name__ == "__main__":
     print("Status  : ONLINE")
     print("--------------------------------")
 
-
     app.run(
-        host="127.0.0.1",
-        port=NODE_PORT,
-        debug=True
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", NODE_PORT)),
+        debug=False
     )
