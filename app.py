@@ -17,7 +17,10 @@ app = Flask(__name__)
 # APPLICATION SETTINGS
 # =========================
 
-app.secret_key = os.environ.get("SECRET_KEY", "vaultx_secret_key_123")
+app.secret_key = os.environ.get(
+    "SECRET_KEY",
+    "vaultx_secret_key_123"
+)
 
 UPLOAD_FOLDER = "storage"
 DATABASE = "vaultx.db"
@@ -38,7 +41,6 @@ app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 # =========================
 
 if not os.path.exists(UPLOAD_FOLDER):
-
     os.makedirs(UPLOAD_FOLDER)
 
 
@@ -53,13 +55,11 @@ def get_encryption_key():
         key = Fernet.generate_key()
 
         with open(KEY_FILE, "wb") as key_file:
-
             key_file.write(key)
 
     else:
 
         with open(KEY_FILE, "rb") as key_file:
-
             key = key_file.read()
 
     return key
@@ -124,6 +124,19 @@ def create_database():
 
 
 # =========================
+# INITIALIZE DATABASE
+# =========================
+
+# IMPORTANT:
+# This runs when Render starts the app
+# through Gunicorn as well.
+
+create_database()
+
+get_encryption_key()
+
+
+# =========================
 # CHECK NODE 1 STATUS
 # =========================
 
@@ -155,7 +168,6 @@ def check_node1():
     except requests.RequestException:
 
         pass
-
 
     return {
         "online": False,
@@ -196,7 +208,6 @@ def check_node2():
     except requests.RequestException:
 
         pass
-
 
     return {
         "online": False,
@@ -917,15 +928,22 @@ def logout():
 
 
 # =========================
+# INITIALIZE APPLICATION
+# =========================
+
+create_database()
+
+get_encryption_key()
+
+
+# =========================
 # START APPLICATION
 # =========================
 
 if __name__ == "__main__":
 
-    create_database()
-
-    get_encryption_key()
-
     app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000)),
         debug=True
     )
