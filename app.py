@@ -118,6 +118,17 @@ def create_database():
         )
     """)
 
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS login_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            email TEXT NOT NULL,
+            login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            status TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+
     connection.commit()
 
     connection.close()
@@ -295,7 +306,6 @@ def register():
 def login():
 
     email = request.form["email"].strip()
-
     password = request.form["password"]
 
     connection = get_db()
@@ -303,77 +313,135 @@ def login():
     user = connection.execute(
         """
         SELECT *
-
         FROM users
-
         WHERE email = ?
         """,
-
         (email,)
     ).fetchone()
 
+    # User does not exist
     if not user:
 
+        connection.execute(
+            """
+            INSERT INTO login_logs
+            (
+                user_id,
+                email,
+                status
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                None,
+                email,
+                "Failed"
+            )
+        )
+
+        connection.commit()
         connection.close()
 
         return "Invalid email or password."
 
-
+    # Check password
     password_is_correct = check_password_hash(
         user["password"],
         password
     )
 
-
-    # Upgrade old plain-text test account
-
-    if (
-        not password_is_correct
-        and user["password"] == password
-    ):
-
-        new_hashed_password = generate_password_hash(
-            password
-        )
+    # Successful login
+    if password_is_correct:
 
         connection.execute(
             """
-            UPDATE users
-
-            SET password = ?
-
-            WHERE id = ?
-            """,
-
+            INSERT INTO login_logs
             (
-                new_hashed_password,
-                user["id"]
+                user_id,
+                email,
+                status
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                user["id"],
+                user["email"],
+                "Success"
             )
         )
 
         connection.commit()
-
-        password_is_correct = True
-
-
-    connection.close()
-
-
-    if password_is_correct:
+        connection.close()
 
         session["user_id"] = user["id"]
-
         session["email"] = user["email"]
 
         return redirect(
             url_for("dashboard")
         )
 
+    # Wrong password
+    connection.execute(
+        """
+        INSERT INTO login_logs
+        (
+            user_id,
+            email,
+            status
+        )
+        VALUES (?, ?, ?)
+        """,
+        (
+            user["id"],
+            user["email"],
+            "Failed"
+        )
+    )
+
+    connection.commit()
+    connection.close()
 
     return "Invalid email or password."
 
-
 # =========================
+# ADMIN DASHBOARD
+# =========================
+
+@app.route("/admin")
+def admin_dashboard():
+
+    # Only admin can access
+    if session.get("email") != "admin@vaultx.com":
+        return "Access Denied. Admin only.", 403
+
+    connection = get_db()
+
+    # Get all registered users
+    users = connection.execute(
+        """
+        SELECT id, email
+        FROM users
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    # Get login activity
+    login_logs = connection.execute(
+        """
+        SELECT email, login_time, status
+        FROM login_logs
+        ORDER BY login_time DESC
+        """
+    ).fetchall()
+
+    connection.close()
+
+    return render_template(
+        "admin.html",
+        users=users,
+        login_logs=login_logs
+    )
+   # =========================
 # DASHBOARD
 # =========================
 
@@ -381,101 +449,67 @@ def login():
 def dashboard():
 
     if "user_id" not in session:
-
         return redirect(
             url_for("login_page")
         )
-
 
     connection = get_db()
 
     files = connection.execute(
         """
         SELECT *
-
         FROM files
-
         WHERE user_id = ?
-
         ORDER BY uploaded_at DESC
         """,
-
-        (
-            session["user_id"],
-        )
+        (session["user_id"],)
     ).fetchall()
 
     connection.close()
 
-
     total_files = len(files)
-
 
     total_size = sum(
         file["file_size"]
         for file in files
     )
 
-
     total_size_mb = round(
         total_size / (1024 * 1024),
         2
     )
-
 
     # =========================
     # CHECK BOTH NODES
     # =========================
 
     node1 = check_node1()
-
     node2 = check_node2()
 
-
     # Count online nodes
-
     network_nodes = 0
 
-
     if node1["online"]:
-
         network_nodes += 1
-
 
     if node2["online"]:
-
         network_nodes += 1
 
-
     # Overall network status
-
     if network_nodes > 0:
-
         network_status = "Online"
-
     else:
-
         network_status = "Offline"
 
-
     return render_template(
-
         "dashboard.html",
-
         email=session["email"],
-
         files=files,
-
         total_files=total_files,
-
         total_size_mb=total_size_mb,
-
         network_nodes=network_nodes,
-
         network_status=network_status,
-
         node1=node1,
-
         node2=node2
     )
 
