@@ -146,7 +146,7 @@ def check_node1():
 
         response = requests.get(
             NODE1_URL + "/status",
-            timeout=2
+            timeout=10
         )
 
         if response.status_code == 200:
@@ -186,7 +186,7 @@ def check_node2():
 
         response = requests.get(
             NODE2_URL + "/status",
-            timeout=2
+            timeout=10
         )
 
         if response.status_code == 200:
