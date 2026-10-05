@@ -966,6 +966,57 @@ def logout():
 # =========================
 
 create_database()
+# =========================
+# CREATE ADMIN USER
+# =========================
+
+def create_admin():
+
+    admin_email = os.environ.get(
+        "ADMIN_EMAIL",
+        "admin@vaultx.com"
+    )
+
+    admin_password = os.environ.get(
+        "ADMIN_PASSWORD",
+        "Admin@123"
+    )
+
+    connection = get_db()
+
+    existing_admin = connection.execute(
+        """
+        SELECT id
+        FROM users
+        WHERE email = ?
+        """,
+        (admin_email,)
+    ).fetchone()
+
+    if not existing_admin:
+
+        hashed_password = generate_password_hash(
+            admin_password
+        )
+
+        connection.execute(
+            """
+            INSERT INTO users
+            (
+                email,
+                password
+            )
+            VALUES (?, ?)
+            """,
+            (
+                admin_email,
+                hashed_password
+            )
+        )
+
+        connection.commit()
+
+    connection.close()
 
 get_encryption_key()
 
