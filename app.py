@@ -26,7 +26,6 @@ UPLOAD_FOLDER = "storage"
 DATABASE = "vaultx.db"
 KEY_FILE = "vaultx.key"
 
-# Storage Node addresses
 NODE1_URL = "https://vaultx-node1.onrender.com"
 NODE2_URL = "https://vaultx-node2.onrender.com"
 
@@ -120,14 +119,88 @@ def create_database():
 
     connection.execute("""
         CREATE TABLE IF NOT EXISTS login_logs (
+
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+
             user_id INTEGER,
+
             email TEXT NOT NULL,
+
             login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
             status TEXT NOT NULL,
+
             FOREIGN KEY (user_id) REFERENCES users(id)
+
         )
     """)
+
+    connection.commit()
+
+    connection.close()
+
+
+# =========================
+# CREATE ADMIN USER
+# =========================
+
+def create_admin():
+
+    admin_email = os.environ.get(
+        "ADMIN_EMAIL",
+        "admin@vaultx.com"
+    )
+
+    admin_password = os.environ.get(
+        "ADMIN_PASSWORD",
+        "Admin@123"
+    )
+
+    connection = get_db()
+
+    existing_admin = connection.execute(
+        """
+        SELECT id
+        FROM users
+        WHERE email = ?
+        """,
+        (admin_email,)
+    ).fetchone()
+
+    hashed_password = generate_password_hash(
+        admin_password
+    )
+
+    if existing_admin:
+
+        connection.execute(
+            """
+            UPDATE users
+            SET password = ?
+            WHERE email = ?
+            """,
+            (
+                hashed_password,
+                admin_email
+            )
+        )
+
+    else:
+
+        connection.execute(
+            """
+            INSERT INTO users
+            (
+                email,
+                password
+            )
+            VALUES (?, ?)
+            """,
+            (
+                admin_email,
+                hashed_password
+            )
+        )
 
     connection.commit()
 
@@ -138,11 +211,9 @@ def create_database():
 # INITIALIZE DATABASE
 # =========================
 
-# IMPORTANT:
-# This runs when Render starts the app
-# through Gunicorn as well.
-
 create_database()
+
+create_admin()
 
 get_encryption_key()
 
@@ -273,10 +344,8 @@ def register():
                 email,
                 password
             )
-
             VALUES (?, ?)
             """,
-
             (
                 email,
                 hashed_password
@@ -306,6 +375,7 @@ def register():
 def login():
 
     email = request.form["email"].strip()
+
     password = request.form["password"]
 
     connection = get_db()
@@ -340,6 +410,7 @@ def login():
         )
 
         connection.commit()
+
         connection.close()
 
         return "Invalid email or password."
@@ -371,9 +442,11 @@ def login():
         )
 
         connection.commit()
+
         connection.close()
 
         session["user_id"] = user["id"]
+
         session["email"] = user["email"]
 
         return redirect(
@@ -399,9 +472,11 @@ def login():
     )
 
     connection.commit()
+
     connection.close()
 
     return "Invalid email or password."
+
 
 # =========================
 # ADMIN DASHBOARD
@@ -412,6 +487,7 @@ def admin_dashboard():
 
     # Only admin can access
     if session.get("email") != "admin@vaultx.com":
+
         return "Access Denied. Admin only.", 403
 
     connection = get_db()
@@ -441,7 +517,9 @@ def admin_dashboard():
         users=users,
         login_logs=login_logs
     )
-   # =========================
+
+
+# =========================
 # DASHBOARD
 # =========================
 
@@ -449,6 +527,7 @@ def admin_dashboard():
 def dashboard():
 
     if "user_id" not in session:
+
         return redirect(
             url_for("login_page")
         )
@@ -479,11 +558,9 @@ def dashboard():
         2
     )
 
-    # =========================
-    # CHECK BOTH NODES
-    # =========================
-
+    # Check both nodes
     node1 = check_node1()
+
     node2 = check_node2()
 
     # Count online nodes
@@ -497,8 +574,11 @@ def dashboard():
 
     # Overall network status
     if network_nodes > 0:
+
         network_status = "Online"
+
     else:
+
         network_status = "Offline"
 
     return render_template(
@@ -527,16 +607,13 @@ def upload_file():
             url_for("login_page")
         )
 
-
     if "file" not in request.files:
 
         return redirect(
             url_for("dashboard")
         )
 
-
     file = request.files["file"]
-
 
     if file.filename == "":
 
@@ -544,11 +621,9 @@ def upload_file():
             url_for("dashboard")
         )
 
-
     original_name = secure_filename(
         file.filename
     )
-
 
     if original_name == "":
 
@@ -556,13 +631,11 @@ def upload_file():
             url_for("dashboard")
         )
 
-
     # =========================
     # READ ORIGINAL FILE
     # =========================
 
     file_data = file.read()
-
 
     # =========================
     # ENCRYPT FILE
@@ -576,32 +649,21 @@ def upload_file():
         file_data
     )
 
-
     # =========================
     # CREATE UNIQUE FILE NAME
     # =========================
 
     stored_name = (
-
         str(session["user_id"])
-
         + "_"
-
-        + str(
-            os.urandom(16).hex()
-        )
-
+        + str(os.urandom(16).hex())
         + ".vault"
     )
 
-
     stored_path = os.path.join(
-
         app.config["UPLOAD_FOLDER"],
-
         stored_name
     )
-
 
     # =========================
     # SAVE ENCRYPTED FILE LOCALLY
@@ -616,10 +678,9 @@ def upload_file():
             encrypted_data
         )
 
-
-    # ==================================================
+    # =========================
     # SEND ENCRYPTED FILE TO NODE 1
-    # ==================================================
+    # =========================
 
     try:
 
@@ -629,9 +690,7 @@ def upload_file():
         ) as encrypted_file:
 
             response = requests.post(
-
                 NODE1_URL + "/store",
-
                 files={
                     "file": (
                         stored_name,
@@ -639,10 +698,8 @@ def upload_file():
                         "application/octet-stream"
                     )
                 },
-
                 timeout=10
             )
-
 
         if response.status_code == 200:
 
@@ -663,7 +720,6 @@ def upload_file():
                 response.status_code
             )
 
-
     except requests.RequestException as error:
 
         print("================================")
@@ -671,10 +727,9 @@ def upload_file():
         print("Error:", error)
         print("================================")
 
-
-    # ==================================================
+    # =========================
     # SEND ENCRYPTED FILE TO NODE 2
-    # ==================================================
+    # =========================
 
     try:
 
@@ -684,9 +739,7 @@ def upload_file():
         ) as encrypted_file:
 
             response = requests.post(
-
                 NODE2_URL + "/store",
-
                 files={
                     "file": (
                         stored_name,
@@ -694,10 +747,8 @@ def upload_file():
                         "application/octet-stream"
                     )
                 },
-
                 timeout=10
             )
-
 
         if response.status_code == 200:
 
@@ -718,14 +769,12 @@ def upload_file():
                 response.status_code
             )
 
-
     except requests.RequestException as error:
 
         print("================================")
         print("Node 2 connection failed")
         print("Error:", error)
         print("================================")
-
 
     # =========================
     # SAVE FILE METADATA
@@ -742,10 +791,8 @@ def upload_file():
             stored_name,
             file_size
         )
-
         VALUES (?, ?, ?, ?)
         """,
-
         (
             session["user_id"],
             original_name,
@@ -757,7 +804,6 @@ def upload_file():
     connection.commit()
 
     connection.close()
-
 
     return redirect(
         url_for("dashboard")
@@ -777,20 +823,15 @@ def download_file(file_id):
             url_for("login_page")
         )
 
-
     connection = get_db()
 
     file_record = connection.execute(
         """
         SELECT *
-
         FROM files
-
         WHERE id = ?
-
         AND user_id = ?
         """,
-
         (
             file_id,
             session["user_id"]
@@ -799,26 +840,20 @@ def download_file(file_id):
 
     connection.close()
 
-
     if not file_record:
 
         return "File not found."
 
-
     stored_path = os.path.join(
-
         app.config["UPLOAD_FOLDER"],
-
         file_record["stored_name"]
     )
-
 
     if not os.path.exists(
         stored_path
     ):
 
         return "Encrypted file is missing."
-
 
     # =========================
     # READ ENCRYPTED FILE
@@ -830,7 +865,6 @@ def download_file(file_id):
     ) as encrypted_file:
 
         encrypted_data = encrypted_file.read()
-
 
     # =========================
     # DECRYPT
@@ -846,15 +880,11 @@ def download_file(file_id):
         encrypted_data
     )
 
-
     return send_file(
-
         io.BytesIO(
             decrypted_data
         ),
-
         as_attachment=True,
-
         download_name=file_record[
             "original_name"
         ]
@@ -877,26 +907,20 @@ def delete_file(file_id):
             url_for("login_page")
         )
 
-
     connection = get_db()
 
     file_record = connection.execute(
         """
         SELECT *
-
         FROM files
-
         WHERE id = ?
-
         AND user_id = ?
         """,
-
         (
             file_id,
             session["user_id"]
         )
     ).fetchone()
-
 
     if not file_record:
 
@@ -904,14 +928,10 @@ def delete_file(file_id):
 
         return "File not found."
 
-
     stored_path = os.path.join(
-
         app.config["UPLOAD_FOLDER"],
-
         file_record["stored_name"]
     )
-
 
     if os.path.exists(
         stored_path
@@ -921,16 +941,12 @@ def delete_file(file_id):
             stored_path
         )
 
-
     connection.execute(
         """
         DELETE FROM files
-
         WHERE id = ?
-
         AND user_id = ?
         """,
-
         (
             file_id,
             session["user_id"]
@@ -940,7 +956,6 @@ def delete_file(file_id):
     connection.commit()
 
     connection.close()
-
 
     return redirect(
         url_for("dashboard")
@@ -962,66 +977,6 @@ def logout():
 
 
 # =========================
-# INITIALIZE APPLICATION
-# =========================
-
-create_database()
-# =========================
-# CREATE ADMIN USER
-# =========================
-
-def create_admin():
-
-    admin_email = os.environ.get(
-        "ADMIN_EMAIL",
-        "admin@vaultx.com"
-    )
-
-    admin_password = os.environ.get(
-        "ADMIN_PASSWORD",
-        "Admin@123"
-    )
-
-    connection = get_db()
-
-    existing_admin = connection.execute(
-        """
-        SELECT id
-        FROM users
-        WHERE email = ?
-        """,
-        (admin_email,)
-    ).fetchone()
-
-    if not existing_admin:
-
-        hashed_password = generate_password_hash(
-            admin_password
-        )
-
-        connection.execute(
-            """
-            INSERT INTO users
-            (
-                email,
-                password
-            )
-            VALUES (?, ?)
-            """,
-            (
-                admin_email,
-                hashed_password
-            )
-        )
-
-        connection.commit()
-
-    connection.close()
-
-get_encryption_key()
-
-
-# =========================
 # START APPLICATION
 # =========================
 
@@ -1029,6 +984,11 @@ if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
-        port=int(os.environ.get("PORT", 5000)),
+        port=int(
+            os.environ.get(
+                "PORT",
+                5000
+            )
+        ),
         debug=True
     )
