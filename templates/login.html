@@ -1,122 +1,110 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>VAULTX - Secure File Vault</title>
 
-    <!-- CSS -->
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/style.css') }}">
-
 </head>
 
 <body>
+    <main class="login-container">
 
-    <div class="login-container">
+        <div class="logo" aria-hidden="true">🔐</div>
+        <h1>VAULT<span>X</span></h1>
+        <p class="subtitle">Decentralised • Encrypted • Private</p>
 
-        <!-- Logo -->
-        <div class="logo">
-            🔐
-        </div>
-
-
-        <!-- Website Name -->
-        <h1>VAULTX</h1>
-
-        <p class="subtitle">
-            Decentralised • Encrypted • Private
-        </p>
-
-
-        <!-- Login Card -->
-        <div class="login-card">
-
+        <section class="login-card">
             <h2>Welcome Back</h2>
-
             <p class="login-description">
                 Sign in to access your secure file vault.
             </p>
 
-
-            <!-- Login Form -->
             <form action="/login" method="POST">
-
-                <!-- Email -->
-                <label for="email">
-                    Email
-                </label>
-
+                <label for="email">Email address</label>
                 <input
                     type="email"
                     id="email"
                     name="email"
-                    placeholder="Enter your email"
+                    placeholder="you@example.com"
+                    autocomplete="username"
                     required
                 >
 
+                <label for="password">Password</label>
+                <div class="password-wrapper">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        required
+                    >
 
-                <!-- Password -->
-                <label for="password">
-                    Password
-                </label>
-
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="Enter your password"
-                    required
-                >
-
-
-                <!-- Forgot Password -->
-                <div class="forgot">
-
-                    <a href="#">
-                        Forgot password?
-                    </a>
-
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        id="togglePassword"
+                        aria-label="Show password"
+                        aria-pressed="false"
+                    >
+                        <svg id="eyeIcon" viewBox="0 0 24 24"
+                             width="22" height="22"
+                             fill="none" stroke="currentColor"
+                             stroke-width="1.8" aria-hidden="true">
+                            <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
                 </div>
 
+                <div class="forgot">
+                    <a href="#">Forgot password?</a>
+                </div>
 
-                <!-- Login Button -->
-                <button type="submit">
-                    LOGIN
+                <button type="submit" class="login-button">
+                    LOGIN <span aria-hidden="true">→</span>
                 </button>
-
             </form>
 
-
-            <!-- Register Link -->
             <p class="register">
-
                 Don't have an account?
-
-                <a href="/register">
-                    Create Account
-                </a>
-
+                <a href="/register">Create Account</a>
             </p>
+        </section>
 
-        </div>
-
-
-        <!-- Security Message -->
         <p class="security-note">
-            🛡 Your files are protected with strong encryption
+            <span aria-hidden="true">🛡️</span>
+            Your files are protected with encryption
         </p>
 
-    </div>
+        <p class="login-footer">PRIVATE BY DESIGN · VAULTX</p>
+    </main>
 
+    <script>
+        const passwordInput = document.getElementById("password");
+        const togglePassword = document.getElementById("togglePassword");
+        const eyeIcon = document.getElementById("eyeIcon");
 
-    <!-- JavaScript -->
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+        togglePassword.addEventListener("click", function () {
+            const showPassword = passwordInput.type === "password";
 
+            passwordInput.type = showPassword ? "text" : "password";
+            togglePassword.setAttribute("aria-pressed", String(showPassword));
+            togglePassword.setAttribute(
+                "aria-label",
+                showPassword ? "Hide password" : "Show password"
+            );
+
+            eyeIcon.innerHTML = showPassword
+                ? '<path d="M3 3l18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a16 16 0 0 1-3.1 3.9"/><path d="M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7a10 10 0 0 0 4-.8"/>'
+                : '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>';
+        });
+    </script>
 </body>
-
 </html>
+```
