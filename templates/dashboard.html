@@ -1,675 +1,323 @@
-```html
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
-    <title>VAULTX - Dashboard</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VaultX | Secure Dashboard</title>
     <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css') }}">
-
+          href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
-
 <body>
+    <div class="app-shell">
 
-<div class="dashboard-container">
-
-
-    <!-- SIDEBAR -->
-
-    <aside class="sidebar">
-
-        <div class="brand">
-
-            <div class="brand-logo">
-                🔐
-            </div>
-
-            <div>
-
-                <h2>VAULTX</h2>
-
-                <span>
-                    Secure File Vault
+        <aside class="sidebar">
+            <a class="brand" href="{{ url_for('dashboard') }}">
+                <span class="brand-icon">V</span>
+                <span>Vault<span class="cyan">X</span>
+                    <small>SECURE FILE VAULT</small>
                 </span>
-
-            </div>
-
-        </div>
-
-
-        <nav class="sidebar-nav">
-
-            <p class="nav-title">
-                MAIN
-            </p>
-
-            <a href="/dashboard"
-               class="nav-item active">
-
-                <span>🏠</span>
-
-                Dashboard
-
             </a>
 
-
-            <a href="#files"
-               class="nav-item">
-
-                <span>📁</span>
-
-                My Files
-
+            <div class="nav-label">WORKSPACE</div>
+            <a class="nav-item active" href="{{ url_for('dashboard') }}">
+                <span>▦</span> Dashboard
+            </a>
+            <a class="nav-item" href="#my-files">
+                <span>▤</span> My Files
+            </a>
+            <a class="nav-item" href="#storage-nodes">
+                <span>◈</span> Storage Nodes
             </a>
 
-
-            <a href="#upload"
-               class="nav-item">
-
-                <span>⬆️</span>
-
-                Upload
-
+            {% if email == 'admin@vaultx.com' %}
+            <div class="nav-label">ADMINISTRATION</div>
+            <a class="nav-item" href="{{ url_for('admin_dashboard') }}">
+                <span>◉</span> Login Activity
             </a>
-
-
-            <p class="nav-title security-title">
-                SECURITY
-            </p>
-
-
-            <a href="#security"
-               class="nav-item">
-
-                <span>🔐</span>
-
-                Security Center
-
-            </a>
-
-
-            <a href="#network"
-               class="nav-item">
-
-                <span>🌐</span>
-
-                Network Nodes
-
-            </a>
-
-
-            <p class="nav-title security-title">
-                SYSTEM
-            </p>
-
-
-            <a href="#settings"
-               class="nav-item">
-
-                <span>⚙️</span>
-
-                Settings
-
-            </a>
-
-        </nav>
-
-
-        <div class="sidebar-bottom">
-
-            <div class="sidebar-status">
-
-                <span class="status-dot"></span>
-
-                <div>
-
-                    <strong>
-                        System Secure
-                    </strong>
-
-                    <small>
-                        All services operational
-                    </small>
-
-                </div>
-
-            </div>
-
-
-            <a href="/logout"
-               class="logout-btn">
-
-                <span>🚪</span>
-
-                Logout
-
-            </a>
-
-        </div>
-
-    </aside>
-
-
-
-    <!-- MAIN -->
-
-    <main class="main-content">
-
-
-        <!-- TOPBAR -->
-
-        <header class="topbar">
-
-            <div>
-
-                <p class="page-label">
-                    OVERVIEW
-                </p>
-
-                <h1>
-                    Dashboard
-                </h1>
-
-            </div>
-
-
-            <div class="topbar-right">
-
-                <button class="notification-btn">
-                    🔔
-                </button>
-
-
-                <div class="user-profile">
-
-                    <div class="user-avatar">
-
-                        {{ email[0]|upper }}
-
-                    </div>
-
-
-                    <div class="user-info">
-
-                        <strong>
-                            {{ email }}
-                        </strong>
-
-                        <span>
-                            Vault Owner
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </header>
-
-
-
-        <!-- WELCOME -->
-
-        <section class="welcome-section"
-                 id="upload">
-
-            <div>
-
-                <p class="welcome-small">
-                    Welcome back
-                </p>
-
-                <h2>
-                    Your private vault is ready.
-                </h2>
-
-                <p>
-                    Upload your files and protect them
-                    with encryption.
-                </p>
-
-            </div>
-
-
-            <form action="/upload"
-                  method="POST"
-                  enctype="multipart/form-data"
-                  class="upload-form">
-
-                <input
-                    type="file"
-                    name="file"
-                    id="fileInput"
-                    required
-                    hidden
-                >
-
-                <label
-                    for="fileInput"
-                    class="upload-main-btn">
-
-                    ⬆️ Upload File
-
-                </label>
-
-                <button
-                    type="submit"
-                    id="uploadSubmit"
-                    class="upload-submit-btn">
-
-                    Encrypt & Save
-
-                </button>
-
-            </form>
-
-        </section>
-
-
-
-        <!-- STAT CARDS -->
-
-        <section class="stats-grid">
-
-
-            <div class="stat-card">
-
-                <div class="stat-icon blue">
-                    📁
-                </div>
-
-                <div class="stat-content">
-
-                    <span>
-                        Total Files
-                    </span>
-
-                    <strong>
-                        {{ total_files }}
-                    </strong>
-
-                    <small>
-                        Files in your vault
-                    </small>
-
-                </div>
-
-            </div>
-
-
-            <div class="stat-card">
-
-                <div class="stat-icon purple">
-                    💾
-                </div>
-
-                <div class="stat-content">
-
-                    <span>
-                        Storage Used
-                    </span>
-
-                    <strong>
-                        {{ total_size_mb }} MB
-                    </strong>
-
-                    <small>
-                        Original file size
-                    </small>
-
-                </div>
-
-            </div>
-
-
-            <div class="stat-card">
-
-                <div class="stat-icon green">
-                    🔐
-                </div>
-
-                <div class="stat-content">
-
-                    <span>
-                        Security
-                    </span>
-
-                    <strong>
-                        Protected
-                    </strong>
-
-                    <small>
-                        Encryption enabled
-                    </small>
-
-                </div>
-
-            </div>
-
-
-            <!-- NETWORK NODES -->
-
-            <div class="stat-card">
-
-                <div class="stat-icon orange">
-                    🌐
-                </div>
-
-                <div class="stat-content">
-
-                    <span>
-                        Network Nodes
-                    </span>
-
-                    <strong>
-                        {{ network_nodes }}
-                    </strong>
-
-                    <small>
-                        Decentralised nodes
-                    </small>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- FILES -->
-
-        <section class="panel files-panel"
-                 id="files">
-
-            <div class="panel-header">
-
-                <div>
-
-                    <h3>
-                        My Files
-                    </h3>
-
-                    <p>
-                        Encrypted files stored in your vault
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            {% if files %}
-
-            <div class="file-list">
-
-                {% for file in files %}
-
-                <div class="file-row">
-
-
-                    <div class="file-icon">
-                        📄
-                    </div>
-
-
-                    <div class="file-details">
-
-                        <strong>
-                            {{ file["original_name"] }}
-                        </strong>
-
-                        <span>
-                            {{ "%.2f"|format(file["file_size"] / 1024) }} KB
-                            •
-                            {{ file["uploaded_at"] }}
-                        </span>
-
-                    </div>
-
-
-                    <div class="file-actions">
-
-                        <a
-                            href="/download/{{ file['id'] }}"
-                            class="download-btn">
-
-                            Download
-
-                        </a>
-
-
-                        <form
-                            action="/delete/{{ file['id'] }}"
-                            method="POST">
-
-                            <button
-                                type="submit"
-                                class="delete-btn">
-
-                                Delete
-
-                            </button>
-
-                        </form>
-
-                    </div>
-
-                </div>
-
-                {% endfor %}
-
-            </div>
-
-
-            {% else %}
-
-            <div class="empty-files">
-
-                <div class="empty-icon">
-                    📂
-                </div>
-
-                <h4>
-                    No files yet
-                </h4>
-
-                <p>
-                    Upload your first file to start
-                    using your encrypted vault.
-                </p>
-
-                <label
-                    for="fileInput"
-                    class="empty-upload-btn">
-
-                    Upload Your First File
-
-                </label>
-
-            </div>
-
             {% endif %}
 
-        </section>
+            <div class="sidebar-bottom">
+                <div class="security-note">
+                    <span class="security-symbol">⬡</span>
+                    <strong>Your files. Your privacy.</strong>
+                    <p>Files are encrypted before storage.</p>
+                </div>
+                <a class="nav-item logout"
+                   href="{{ url_for('logout') }}">
+                    <span>↪</span> Sign out
+                </a>
+            </div>
+        </aside>
 
-
-
-        <!-- SECURITY -->
-
-        <section class="panel security-panel"
-                 id="security">
-
-            <div class="panel-header">
-
+        <main class="main-content">
+            <header class="topbar">
                 <div>
+                    <div class="eyebrow">SECURE STORAGE PLATFORM</div>
+                    <h1>Dashboard <span class="cyan">.</span></h1>
+                    <p class="muted">Manage your encrypted files and network.</p>
+                </div>
+                <div class="user-chip">
+                    <span class="avatar">
+                        {{ email[0]|upper if email else 'U' }}
+                    </span>
+                    <span class="user-email">{{ email }}</span>
+                </div>
+            </header>
 
-                    <h3>
-                        Security Status
-                    </h3>
-
+            <section class="welcome-banner">
+                <div class="banner-content">
+                    <div class="status-label">
+                        <span class="pulse"></span>
+                        YOUR PRIVATE VAULT
+                    </div>
+                    <h2>Secure storage.<br>Complete control.</h2>
                     <p>
-                        Vault protection overview
+                        Your files are encrypted before being sent
+                        to the storage nodes.
                     </p>
-
+                    <a class="button button-primary" href="#upload-file">
+                        <span>＋</span> Upload a file
+                    </a>
                 </div>
-
-                <span class="secure-badge">
-                    SECURE
-                </span>
-
-            </div>
-
-
-            <div class="security-item">
-
-                <div class="security-item-icon">
-                    🔑
+                <div class="banner-art" aria-hidden="true">
+                    <div class="orbit orbit-one"></div>
+                    <div class="orbit orbit-two"></div>
+                    <div class="shield">⬡</div>
+                    <div class="art-lock">⌑</div>
+                    <span class="art-dot dot-one"></span>
+                    <span class="art-dot dot-two"></span>
                 </div>
+            </section>
 
-                <div>
+            <section class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span>Total files</span>
+                        <span class="stat-icon">▤</span>
+                    </div>
+                    <div class="stat-number">{{ total_files }}</div>
+                    <div class="stat-caption">Files in your vault</div>
+                </article>
 
-                    <strong>
-                        Account Protection
-                    </strong>
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span>Storage used</span>
+                        <span class="stat-icon">◫</span>
+                    </div>
+                    <div class="stat-number">
+                        {{ total_size_mb }} <small>MB</small>
+                    </div>
+                    <div class="stat-caption">Total original file size</div>
+                </article>
 
-                    <span>
-                        Password securely hashed
-                    </span>
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span>Active nodes</span>
+                        <span class="stat-icon">⌘</span>
+                    </div>
+                    <div class="stat-number">
+                        {{ network_nodes }}<small> / 2</small>
+                    </div>
+                    <div class="stat-caption">
+                        {{ network_status }} network status
+                    </div>
+                </article>
 
-                </div>
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span>Encryption</span>
+                        <span class="stat-icon">◇</span>
+                    </div>
+                    <div class="stat-number encryption-value">Fernet</div>
+                    <div class="stat-caption">Symmetric-key encryption</div>
+                </article>
+            </section>
 
-                <b>✓</b>
+            <section class="content-grid">
+                <article class="panel upload-panel" id="upload-file">
+                    <div class="section-heading">
+                        <div>
+                            <div class="eyebrow">ADD TO YOUR VAULT</div>
+                            <h2>Upload a file</h2>
+                        </div>
+                        <span class="heading-icon">↑</span>
+                    </div>
 
-            </div>
-
-
-            <div class="security-item">
-
-                <div class="security-item-icon">
-                    🔒
-                </div>
-
-                <div>
-
-                    <strong>
-                        File Encryption
-                    </strong>
-
-                    <span>
-                        Files encrypted before storage
-                    </span>
-
-                </div>
-
-                <b>✓</b>
-
-            </div>
-
-
-            <div class="security-item">
-
-                <div class="security-item-icon">
-                    🛡️
-                </div>
-
-                <div>
-
-                    <strong>
-                        Private Storage
-                    </strong>
-
-                    <span>
-                        Files belong only to your account
-                    </span>
-
-                </div>
-
-                <b>✓</b>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- NETWORK -->
-
-        <section class="panel network-panel"
-                 id="network">
-
-            <div class="panel-header">
-
-                <div>
-
-                    <h3>
-                        Decentralised Network
-                    </h3>
-
-                    <p>
-                        Distributed storage infrastructure
+                    <form action="{{ url_for('upload_file') }}"
+                          method="POST" enctype="multipart/form-data"
+                          id="uploadForm">
+                        <label class="drop-zone" for="fileInput">
+                            <span class="upload-icon">↑</span>
+                            <strong id="fileLabel">Choose a file to upload</strong>
+                            <span class="muted" id="fileHint">
+                                Click to browse your computer
+                            </span>
+                            <span class="file-limit">Maximum file size: 50 MB</span>
+                        </label>
+                        <input type="file" name="file" id="fileInput" required>
+                        <button class="button button-primary full-width"
+                                type="submit" id="uploadButton">
+                            Encrypt &amp; upload <span>→</span>
+                        </button>
+                    </form>
+                    <p class="form-note">
+                        Files are encrypted before node storage.
                     </p>
+                </article>
 
+                <article class="panel nodes-panel" id="storage-nodes">
+                    <div class="section-heading">
+                        <div>
+                            <div class="eyebrow">NETWORK HEALTH</div>
+                            <h2>Storage nodes</h2>
+                        </div>
+                        <span class="live-label">
+                            <span class="pulse"></span> LIVE CHECK
+                        </span>
+                    </div>
+
+                    <div class="node-row">
+                        <div class="node-icon">N1</div>
+                        <div class="node-details">
+                            <strong>{{ node1.node_id }}</strong>
+                            <span>Storage node 01</span>
+                        </div>
+                        <span class="node-status {{ 'online' if node1.online else 'offline' }}">
+                            {{ 'Online' if node1.online else 'Offline' }}
+                        </span>
+                        <div class="node-files">
+                            <strong>{{ node1.stored_files }}</strong>
+                            <span>files</span>
+                        </div>
+                    </div>
+
+                    <div class="node-row">
+                        <div class="node-icon">N2</div>
+                        <div class="node-details">
+                            <strong>{{ node2.node_id }}</strong>
+                            <span>Storage node 02</span>
+                        </div>
+                        <span class="node-status {{ 'online' if node2.online else 'offline' }}">
+                            {{ 'Online' if node2.online else 'Offline' }}
+                        </span>
+                        <div class="node-files">
+                            <strong>{{ node2.stored_files }}</strong>
+                            <span>files</span>
+                        </div>
+                    </div>
+
+                    <div class="node-footer">
+                        <span class="pulse"></span>
+                        Status checked when dashboard loaded
+                    </div>
+                    <a class="text-link" href="{{ url_for('dashboard') }}">
+                        Refresh node status ↻
+                    </a>
+                </article>
+            </section>
+
+            <section class="panel files-panel" id="my-files">
+                <div class="section-heading files-heading">
+                    <div>
+                        <div class="eyebrow">YOUR PRIVATE STORAGE</div>
+                        <h2>My files</h2>
+                        <p class="muted">Manage your uploaded documents.</p>
+                    </div>
+                    <span class="file-count">{{ total_files }} files</span>
                 </div>
 
-                <!-- DYNAMIC NODE STATUS -->
-
-                <span class="network-status">
-
-                    ● {{ network_status }}
-
-                </span>
-
-            </div>
-
-
-            <div class="network-content">
-
-                <div class="network-visual">
-
-                    <div class="network-node center-node">
-                        🔐
-                    </div>
-
-                    <div class="network-line line-one"></div>
-
-                    <div class="network-line line-two"></div>
-
-                    <div class="network-line line-three"></div>
-
-
-                    <!-- NODE 1 -->
-
-                    <div class="network-node node-one">
-
-                        N1
-
-                    </div>
-
-
-                    <div class="network-node node-two">
-
-                        N2
-
-                    </div>
-
-
-                    <div class="network-node node-three">
-
-                        N3
-
-                    </div>
-
+                {% if files %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>FILE NAME</th>
+                                <th>SIZE</th>
+                                <th>UPLOADED</th>
+                                <th>STATUS</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for file in files %}
+                            <tr>
+                                <td>
+                                    <div class="file-cell">
+                                        <span class="file-icon">▤</span>
+                                        <span class="file-name">
+                                            {{ file.original_name }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {{ "%.2f"|format(file.file_size / 1048576) }} MB
+                                </td>
+                                <td>{{ file.uploaded_at }}</td>
+                                <td><span class="encrypted-badge">◇ Encrypted locally</span></td>
+                                <td>
+                                    <div class="actions">
+                                        <a class="action-button"
+                                           href="{{ url_for('download_file', file_id=file.id) }}"
+                                           title="Download file">↓</a>
+                                        <form action="{{ url_for('delete_file', file_id=file.id) }}"
+                                              method="POST"
+                                              onsubmit="return confirm('Delete this file from your vault?')">
+                                            <button class="action-button delete-button"
+                                                    type="submit"
+                                                    title="Delete file">×</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">▤</div>
+                    <h3>Your vault is empty</h3>
+                    <p>Upload your first file to get started with encrypted storage.</p>
+                    <a class="button button-secondary" href="#upload-file">
+                        Upload your first file
+                    </a>
+                </div>
+                {% endif %}
+            </section>
 
+            <footer class="page-footer">
+                <span>VAULTX <span class="cyan">●</span> PRIVATE FILE STORAGE</span>
+                <span>Encrypted with Fernet · Keep your key secure</span>
+            </footer>
+        </main>
+    </div>
 
-                <div class="network-info">
-```
+    <script>
+        const fileInput = document.getElementById("fileInput");
+        const fileLabel = document.getElementById("fileLabel");
+        const fileHint = document.getElementById("fileHint");
+        const uploadForm = document.getElementById("uploadForm");
+        const uploadButton = document.getElementById("uploadButton");
+
+        fileInput.addEventListener("change", function () {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                fileLabel.textContent = file.name;
+                fileHint.textContent =
+                    (file.size / (1024 * 1024)).toFixed(2) + " MB selected";
+            } else {
+                fileLabel.textContent = "Choose a file to upload";
+                fileHint.textContent = "Click to browse your computer";
+            }
+        });
+
+        uploadForm.addEventListener("submit", function () {
+            if (fileInput.files.length > 0) {
+                uploadButton.disabled = true;
+                uploadButton.textContent = "Encrypting & uploading...";
+            }
+        });
+    </script>
+</body>
+</html>
