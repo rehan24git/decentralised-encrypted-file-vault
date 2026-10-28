@@ -22,6 +22,9 @@
             <p class="login-description">
                 Sign in to access your secure file vault.
             </p>
+            {% if error %}
+    <p class="login-error" role="alert">{{ error }}</p>
+{% endif %}
 
             <form action="/login" method="POST">
                 <label for="email">Email address</label>

@@ -219,3 +219,68 @@ body:has(.login-container) {
         font-size: 25px;
     }
 }
+
+/* Create Account button */
+.register-container button,
+.register-container input[type="submit"],
+.register-container button[type="submit"] {
+    width: 100%;
+    padding: 14px 20px;
+    margin-top: 16px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #00d4ff, #00a6d6);
+    color: #07111f;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+.register-container button:hover,
+.register-container input[type="submit"]:hover,
+.register-container button[type="submit"]:hover {
+    background: linear-gradient(135deg, #35e1ff, #00b8e6);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 212, 255, 0.2);
+}
+
+/* Register page - Create Account button */
+.login-card form button[type="submit"] {
+    display: block;
+    width: 100%;
+    padding: 15px 20px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #00d4ff, #00a6d6);
+    color: #07111f;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.login-card form button[type="submit"]:hover {
+    background: linear-gradient(135deg, #35e1ff, #00b8e6);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 212, 255, 0.2);
+}
+
+.login-card form button[type="submit"]:active {
+    transform: translateY(0);
+}
+
+/* Login error message */
+.login-error {
+    color: #ff5c67;
+    background: rgba(255, 77, 87, 0.10);
+    border: 1px solid rgba(255, 77, 87, 0.35);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin: 16px 0;
+    font-size: 14px;
+    text-align: left;
+}
+

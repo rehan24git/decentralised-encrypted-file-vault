@@ -413,7 +413,10 @@ def login():
 
         connection.close()
 
-        return "Invalid email or password."
+        return render_template(
+    "login.html",
+    error="Invalid email or password."
+), 401
 
     # Check password
     password_is_correct = check_password_hash(
@@ -475,7 +478,10 @@ def login():
 
     connection.close()
 
-    return "Invalid email or password."
+    return render_template(
+    "login.html",
+    error="Invalid email or password."
+), 401
 
 
 # =========================
