@@ -407,7 +407,7 @@ def forgot_password():
             connection.commit()
             connection.close()
 
-        reset_link = f"{APP_BASE_URL}{url_for('reset_password', token=token)}"
+            reset_link = f"{APP_BASE_URL}{url_for('reset_password', token=token)}"
 
         try:
                 send_password_reset_email(email, reset_link)
