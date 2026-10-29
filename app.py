@@ -71,11 +71,18 @@ def hash_otp(otp):
     return __import__("hashlib").sha256(otp.encode()).hexdigest()
 
 def send_password_reset_email(email, reset_link):
-    if not GMAIL_ADDRESS or not GMAIL_APP_PASSWORD:
-        raise RuntimeError("Gmail settings are missing.")
+    api_key = os.environ.get("RESEND_API_KEY")
 
-    message = f"""Subject: VAULTX Password Reset
+    if not api_key:
+        raise RuntimeError("Resend API key is missing.")
 
+    resend.api_key = api_key
+
+    params = {
+        "from": "VAULTX <onboarding@resend.dev>",
+        "to": [email],
+        "subject": "VAULTX Password Reset",
+        "text": f"""
 We received a request to reset your VAULTX password.
 
 Open this link to set a new password:
@@ -84,10 +91,9 @@ Open this link to set a new password:
 This link expires in 15 minutes.
 If you did not request this, you can ignore this email.
 """
+    }
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
-        server.sendmail(GMAIL_ADDRESS, email, message)
+    resend.Emails.send(params)
 
 
 
