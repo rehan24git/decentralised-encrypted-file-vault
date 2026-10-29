@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAULTX - Verify Email</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <h2>Verify Your Email</h2>
+            <p>Enter the 6-digit verification code sent to your email.</p>
+
+            {% if error %}
+                <p class="login-error" role="alert">{{ error }}</p>
+            {% endif %}
+
+            <form action="{{ url_for('verify_otp') }}" method="POST">
+                <label for="otp">Verification Code</label>
+                <input
+                    type="text"
+                    id="otp"
+                    name="otp"
+                    placeholder="Enter 6-digit OTP"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    maxlength="6"
+                    required
+                >
+                <button type="submit">VERIFY EMAIL</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

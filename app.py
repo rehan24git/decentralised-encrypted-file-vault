@@ -3,6 +3,10 @@ import sqlite3
 import os
 import io
 import requests
+import smtplib
+import secrets
+import time
+import hashlib
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -11,6 +15,9 @@ from cryptography.fernet import Fernet
 
 
 app = Flask(__name__)
+GMAIL_ADDRESS = os.environ.get("GMAIL_ADDRESS")
+GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD")
+APP_BASE_URL = os.environ.get("APP_BASE_URL", "http://127.0.0.1:5000").rstrip("/")
 
 
 # =========================
@@ -30,6 +37,53 @@ NODE1_URL = "https://vaultx-node1.onrender.com"
 NODE2_URL = "https://vaultx-node2.onrender.com"
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+
+def send_otp_email(email, otp):
+    if not GMAIL_ADDRESS or not GMAIL_APP_PASSWORD:
+        raise RuntimeError("Gmail settings are missing.")
+
+    message = f"""Subject: VAULTX Email Verification
+
+Your VAULTX verification code is: {otp}
+
+This code is valid for 5 minutes.
+Do not share this code with anyone.
+"""
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
+        server.sendmail(GMAIL_ADDRESS, email, message)
+
+        
+def generate_otp():
+    return str(secrets.randbelow(900000) + 100000)
+
+
+def hash_otp(otp):
+    return __import__("hashlib").sha256(otp.encode()).hexdigest()
+
+def send_password_reset_email(email, reset_link):
+    if not GMAIL_ADDRESS or not GMAIL_APP_PASSWORD:
+        raise RuntimeError("Gmail settings are missing.")
+
+    message = f"""Subject: VAULTX Password Reset
+
+We received a request to reset your VAULTX password.
+
+Open this link to set a new password:
+{reset_link}
+
+This link expires in 15 minutes.
+If you did not request this, you can ignore this email.
+"""
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
+        server.sendmail(GMAIL_ADDRESS, email, message)
+
+
+
 
 # Maximum upload size: 50 MB
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
@@ -134,9 +188,25 @@ def create_database():
 
         )
     """)
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS pending_registrations (
+            email TEXT PRIMARY KEY,
+            password TEXT NOT NULL,
+            otp_hash TEXT NOT NULL,
+            expires_at REAL NOT NULL,
+            attempts INTEGER NOT NULL DEFAULT 0
+        )
+    """)
+
+    connection.execute("""
+    CREATE TABLE IF NOT EXISTS password_resets (
+        email TEXT PRIMARY KEY,
+        token_hash TEXT NOT NULL,
+        expires_at REAL NOT NULL
+    )
+""")
 
     connection.commit()
-
     connection.close()
 
 
@@ -311,6 +381,114 @@ def login_page():
 # =========================
 # REGISTER PAGE
 # =========================
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+
+        connection = get_db()
+        user = connection.execute(
+            "SELECT id FROM users WHERE email = ?",
+            (email,)
+        ).fetchone()
+
+        if user:
+            token = secrets.token_urlsafe(32)
+            token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO password_resets
+                (email, token_hash, expires_at)
+                VALUES (?, ?, ?)
+                """,
+                (email, token_hash, time.time() + 900)
+            )
+            connection.commit()
+            connection.close()
+
+        reset_link = f"{APP_BASE_URL}{url_for('reset_password', token=token)}"
+
+        try:
+                send_password_reset_email(email, reset_link)
+        except Exception as e:
+                print("PASSWORD RESET EMAIL ERROR:", type(e).__name__)
+        else:
+            connection.close()
+
+        return render_template(
+            "forgot_password.html",
+            message="If this email is registered, a password reset link will be sent."
+        )
+
+    return render_template("forgot_password.html")
+
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+    connection = get_db()
+
+    reset = connection.execute(
+        "SELECT * FROM password_resets WHERE token_hash = ?",
+        (token_hash,)
+    ).fetchone()
+
+    if not reset or time.time() > reset["expires_at"]:
+        if reset:
+            connection.execute(
+                "DELETE FROM password_resets WHERE token_hash = ?",
+                (token_hash,)
+            )
+            connection.commit()
+
+        connection.close()
+        return "This password reset link is invalid or expired. Please request a new one.", 400
+
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if len(password) < 8:
+            connection.close()
+            return render_template(
+                "reset_password.html",
+                token=token,
+                error="Password must be at least 8 characters long."
+            ), 400
+
+        if password != confirm_password:
+            connection.close()
+            return render_template(
+                "reset_password.html",
+                token=token,
+                error="Passwords do not match."
+            ), 400
+
+        hashed_password = generate_password_hash(password)
+
+        connection.execute(
+            "UPDATE users SET password = ? WHERE email = ?",
+            (hashed_password, reset["email"])
+        )
+
+        connection.execute(
+            "DELETE FROM password_resets WHERE email = ?",
+            (reset["email"],)
+        )
+
+        connection.commit()
+        connection.close()
+
+        return redirect(url_for("login_page"))
+
+    connection.close()
+
+    return render_template(
+        "reset_password.html",
+        token=token,
+        error=None
+    )
 
 @app.route("/register")
 def register_page():
@@ -323,48 +501,160 @@ def register_page():
 # =========================
 
 @app.route("/register", methods=["POST"])
+
 def register():
+    email = request.form.get("email", "").strip()
+    password = request.form.get("password", "")
 
-    email = request.form["email"].strip()
+    if not email or not password:
+        return render_template(
+            "register.html",
+            error="Email and password are required."
+        ), 400
 
-    password = request.form["password"]
-
-    hashed_password = generate_password_hash(
-        password
-    )
+    hashed_password = generate_password_hash(password)
+    otp = generate_otp()
 
     connection = get_db()
 
-    try:
+    existing_user = connection.execute(
+        "SELECT id FROM users WHERE email = ?",
+        (email,)
+    ).fetchone()
 
-        connection.execute(
-            """
-            INSERT INTO users
-            (
-                email,
-                password
-            )
-            VALUES (?, ?)
-            """,
-            (
-                email,
-                hashed_password
-            )
-        )
-
-        connection.commit()
-
-    except sqlite3.IntegrityError:
-
+    if existing_user:
         connection.close()
+        return render_template(
+            "register.html",
+            error="This email is already registered."
+        ), 400
 
-        return "This email is already registered."
-
+    connection.execute(
+        """
+        INSERT OR REPLACE INTO pending_registrations
+        (email, password, otp_hash, expires_at, attempts)
+        VALUES (?, ?, ?, ?, 0)
+        """,
+        (email, hashed_password, hash_otp(otp), time.time() + 300)
+    )
+    connection.commit()
     connection.close()
 
-    return redirect(
-        url_for("login_page")
-    )
+    try:
+        send_otp_email(email, otp)
+        
+    
+    except Exception as e:
+        print("OTP EMAIL ERROR:", repr(e))
+
+        connection = get_db()
+
+        connection.execute(
+            "DELETE FROM pending_registrations WHERE email = ?",
+            (email,)
+        )
+        connection.commit()
+        connection.close()
+
+        return render_template(
+            "register.html",
+            error="Could not send OTP. Please check email settings and try again."
+        ), 500
+
+    session["pending_email"] = email
+    return redirect(url_for("verify_otp_page"))
+
+
+
+@app.route("/verify-otp", methods=["GET"])
+def verify_otp_page():
+    if not session.get("pending_email"):
+        return redirect(url_for("register_page"))
+
+    return render_template("verify_otp.html")
+
+@app.route("/verify-otp", methods=["POST"])
+def verify_otp():
+    email = session.get("pending_email")
+    if not email:
+        return redirect(url_for("register_page"))
+
+    otp = request.form.get("otp", "").strip()
+    connection = get_db()
+
+    pending = connection.execute(
+        "SELECT * FROM pending_registrations WHERE email = ?",
+        (email,)
+    ).fetchone()
+
+    if not pending:
+        connection.close()
+        session.pop("pending_email", None)
+        return redirect(url_for("register_page"))
+
+    if time.time() > pending["expires_at"]:
+        connection.execute(
+            "DELETE FROM pending_registrations WHERE email = ?",
+            (email,)
+        )
+        connection.commit()
+        connection.close()
+        session.pop("pending_email", None)
+        return render_template(
+            "register.html",
+            error="OTP expired. Please register again."
+        ), 400
+
+    if pending["attempts"] >= 5:
+        connection.execute(
+            "DELETE FROM pending_registrations WHERE email = ?",
+            (email,)
+        )
+        connection.commit()
+        connection.close()
+        session.pop("pending_email", None)
+        return render_template(
+            "register.html",
+            error="Too many attempts. Please register again."
+        ), 400
+
+    if not secrets.compare_digest(
+        hash_otp(otp), pending["otp_hash"]
+    ):
+        connection.execute(
+            "UPDATE pending_registrations SET attempts = attempts + 1 WHERE email = ?",
+            (email,)
+        )
+        connection.commit()
+        connection.close()
+        return render_template(
+            "verify_otp.html",
+            error="Invalid verification code."
+        ), 400
+
+    try:
+        connection.execute(
+            "INSERT INTO users (email, password) VALUES (?, ?)",
+            (pending["email"], pending["password"])
+        )
+        connection.execute(
+            "DELETE FROM pending_registrations WHERE email = ?",
+            (email,)
+        )
+        connection.commit()
+    except sqlite3.IntegrityError:
+        connection.rollback()
+        connection.close()
+        session.pop("pending_email", None)
+        return render_template(
+            "register.html",
+            error="This email is already registered."
+        ), 400
+
+    connection.close()
+    session.pop("pending_email", None)
+    return redirect(url_for("login_page"))
+
 
 
 # =========================
