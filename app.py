@@ -395,6 +395,7 @@ def login_page():
 # REGISTER PAGE
 # =========================
 
+
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
@@ -403,9 +404,11 @@ def forgot_password():
         connection = get_db()
         try:
             user = connection.execute(
-                "SELECT id FROM users WHERE email = ?",
+                "SELECT id FROM users WHERE email = ? COLLATE NOCASE",
                 (email,)
             ).fetchone()
+
+            print("PASSWORD RESET USER FOUND:", bool(user))
 
             if user:
                 token = secrets.token_urlsafe(32)
@@ -428,11 +431,10 @@ def forgot_password():
 
                 try:
                     send_password_reset_email(email, reset_link)
+                    print("PASSWORD RESET EMAIL SENT")
                 except Exception as e:
-                    print(
-                        "PASSWORD RESET EMAIL ERROR:",
-                        repr(e)
-                    )
+                    print("PASSWORD RESET EMAIL ERROR:", repr(e))
+
         finally:
             connection.close()
 
@@ -442,6 +444,7 @@ def forgot_password():
         )
 
     return render_template("forgot_password.html")
+
 
 @app.route("/reset-password/<token>", methods=["GET", "POST"])
 def reset_password(token):
