@@ -394,39 +394,46 @@ def login_page():
 # =========================
 # REGISTER PAGE
 # =========================
+
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
         email = request.form.get("email", "").strip()
 
         connection = get_db()
-        user = connection.execute(
-            "SELECT id FROM users WHERE email = ?",
-            (email,)
-        ).fetchone()
-
-        if user:
-            token = secrets.token_urlsafe(32)
-            token_hash = hashlib.sha256(token.encode()).hexdigest()
-
-            connection.execute(
-                """
-                INSERT OR REPLACE INTO password_resets
-                (email, token_hash, expires_at)
-                VALUES (?, ?, ?)
-                """,
-                (email, token_hash, time.time() + 900)
-            )
-            connection.commit()
-            connection.close()
-
-            reset_link = f"{APP_BASE_URL}{url_for('reset_password', token=token)}"
-
         try:
-                send_password_reset_email(email, reset_link)
-        except Exception as e:
-                print("PASSWORD RESET EMAIL ERROR:", type(e).__name__)
-        else:
+            user = connection.execute(
+                "SELECT id FROM users WHERE email = ?",
+                (email,)
+            ).fetchone()
+
+            if user:
+                token = secrets.token_urlsafe(32)
+                token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+                connection.execute(
+                    """
+                    INSERT OR REPLACE INTO password_resets
+                    (email, token_hash, expires_at)
+                    VALUES (?, ?, ?)
+                    """,
+                    (email, token_hash, time.time() + 900)
+                )
+                connection.commit()
+
+                reset_link = (
+                    f"{APP_BASE_URL}"
+                    f"{url_for('reset_password', token=token)}"
+                )
+
+                try:
+                    send_password_reset_email(email, reset_link)
+                except Exception as e:
+                    print(
+                        "PASSWORD RESET EMAIL ERROR:",
+                        repr(e)
+                    )
+        finally:
             connection.close()
 
         return render_template(
