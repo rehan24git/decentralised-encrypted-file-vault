@@ -7,6 +7,7 @@ import smtplib
 import secrets
 import time
 import hashlib
+import resend
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -40,20 +41,26 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
 def send_otp_email(email, otp):
-    if not GMAIL_ADDRESS or not GMAIL_APP_PASSWORD:
-        raise RuntimeError("Gmail settings are missing.")
+    api_key = os.environ.get("RESEND_API_KEY")
 
-    message = f"""Subject: VAULTX Email Verification
+    if not api_key:
+        raise RuntimeError("Resend API key is missing.")
 
+    resend.api_key = api_key
+
+    params = {
+        "from": "VAULTX <onboarding@resend.dev>",
+        "to": [email],
+        "subject": "VAULTX Email Verification",
+        "text": f"""
 Your VAULTX verification code is: {otp}
 
 This code is valid for 5 minutes.
 Do not share this code with anyone.
 """
+    }
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
-        server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
-        server.sendmail(GMAIL_ADDRESS, email, message)
+    resend.Emails.send(params)
 
         
 def generate_otp():
